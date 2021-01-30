@@ -22,23 +22,27 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 ArduinoSpotify::ArduinoSpotify(Client &client, char *bearerToken)
 {
-    this->client = &client;
+    this->_client = &client;
     sprintf(this->_bearerToken, "Bearer %s", bearerToken);
-}
+    _http = new HTTPClient();
+    _http->setTimeout(SPOTIFY_TIMEOUT);
+    _http->setConnectTimeout(SPOTIFY_TIMEOUT);
+ }
 
 ArduinoSpotify::ArduinoSpotify(Client &client, const char *clientId, const char *clientSecret, const char *refreshToken)
 {
-    this->client = &client;
+    this->_client = &client;
     this->_clientId = clientId;
     this->_clientSecret = clientSecret;
     this->_refreshToken = refreshToken;
+    _http = new HTTPClient();
+    _http->setTimeout(SPOTIFY_TIMEOUT);
+    _http->setConnectTimeout(SPOTIFY_TIMEOUT);
 }
 
 int ArduinoSpotify::makeRequestWithBody(const char *type, const char *command, const char *authorization, const char *body, const char *contentType, const char *host)
 {
-    client->flush();
-    client->setTimeout(SPOTIFY_TIMEOUT);
-    if (!client->connect(host, portNumber))
+    if (!_http->begin(host))
     {
         Serial.println(F("Connection failed"));
         return -1;
@@ -177,8 +181,8 @@ bool ArduinoSpotify::refreshAccessToken()
         {
             sprintf(this->_bearerToken, "Bearer %s", doc["access_token"].as<char *>());
             int tokenTtl = doc["expires_in"];             // Usually 3600 (1 hour)
-            tokenTimeToLiveMs = (tokenTtl * 1000) - 2000; // The 2000 is just to force the token expiry to check if its very close
-            timeTokenRefreshed = now;
+            _tokenTimeToLiveMs = (tokenTtl * 1000) - 2000; // The 2000 is just to force the token expiry to check if its very close
+            _timeTokenRefreshed = now;
             refreshed = true;
         }
     }
@@ -193,8 +197,8 @@ bool ArduinoSpotify::refreshAccessToken()
 
 bool ArduinoSpotify::checkAndRefreshAccessToken()
 {
-    unsigned long timeSinceLastRefresh = millis() - timeTokenRefreshed;
-    if (timeSinceLastRefresh >= tokenTimeToLiveMs)
+    unsigned long timeSinceLastRefresh = millis() - _timeTokenRefreshed;
+    if (timeSinceLastRefresh >= _tokenTimeToLiveMs)
     {
         Serial.println("Refresh of the Access token is due, doing that now.");
         return refreshAccessToken();
@@ -235,8 +239,8 @@ const char *ArduinoSpotify::requestAccessTokens(const char *code, const char *re
             sprintf(this->_bearerToken, "Bearer %s", doc["access_token"].as<char *>());
             _refreshToken = doc["refresh_token"].as<char *>();
             int tokenTtl = doc["expires_in"];             // Usually 3600 (1 hour)
-            tokenTimeToLiveMs = (tokenTtl * 1000) - 2000; // The 2000 is just to force the token expiry to check if its very close
-            timeTokenRefreshed = now;
+            _tokenTimeToLiveMs = (tokenTtl * 1000) - 2000; // The 2000 is just to force the token expiry to check if its very close
+            _timeTokenRefreshed = now;
         }
     }
     else

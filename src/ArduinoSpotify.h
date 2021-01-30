@@ -31,6 +31,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <Client.h>
+#if defined(ESP32)
+#include <HTTPClient.h>
+#elif defined(ESP8266)
+#include <ESP8266HTTPClient.h>
+#endif
 
 #define SPOTIFY_HOST "api.spotify.com"
 #define SPOTIFY_ACCOUNTS_HOST "accounts.spotify.com"
@@ -151,21 +156,21 @@ public:
   // Image methods
   bool getImage(char *imageUrl, Stream *file);
 
-  int portNumber = 443;
   int tagArraySize = 10;
   int deviceBufferSize = 10000;
   int currentlyPlayingBufferSize = 10000;
   int playerDetailsBufferSize = 10000;
   bool autoTokenRefresh = true;
-  Client *client;
 
 private:
   char _bearerToken[200];
   const char *_refreshToken;
   const char *_clientId;
   const char *_clientSecret;
-  unsigned int timeTokenRefreshed;
-  unsigned int tokenTimeToLiveMs;
+  unsigned int _timeTokenRefreshed;
+  unsigned int _tokenTimeToLiveMs;
+  Client *_client;
+  HTTPClient *_http;
   // Should not be needed, but might be use to save some RAM between requests
   void stopClient();
   int getContentLength();
