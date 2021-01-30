@@ -76,14 +76,14 @@ struct SpotifyImage
 {
   int height;
   int width;
-  char url[101] = {0};
+  String url;
 };
 
 struct SpotifyDevice
 {
-  char id[41] = {0};
-  char name[41] = {0};
-  char type[41] = {0};
+  String id;
+  String name;
+  String type;
   bool isActive;
   bool isRestricted;
   bool isPrivateSession;
@@ -104,12 +104,13 @@ struct PlayerDetails
 
 struct CurrentlyPlaying
 {
-  char firstArtistName[51] = {0};
-  char firstArtistUri[61] = {0};
-  char albumName[51] = {0};
-  char albumUri[61] = {0};
-  char trackName[51] = {0};
-  char trackUri[61] = {0};
+  String firstArtistName;
+  String firstArtistUri;
+  String albumName;
+  String albumUri;
+  String trackName;
+  String trackUri;
+  String contextUri;
   SpotifyImage albumImages[SPOTIFY_NUM_ALBUM_IMAGES];
   int numImages;
   bool isPlaying;
@@ -141,7 +142,7 @@ public:
   CurrentlyPlaying getCurrentlyPlaying(const char *market = "");
   PlayerDetails getPlayerDetails(const char *market = "");
   bool play(const char *deviceId = "");
-  bool playAdvanced(char *body, const char *deviceId = "");
+  bool playAdvanced(const char *body, const char *deviceId = "");
   bool pause(const char *deviceId = "");
   bool setVolume(int volume, const char *deviceId = "");
   bool toggleShuffle(bool shuffle, const char *deviceId = "");
@@ -164,7 +165,7 @@ public:
   bool autoTokenRefresh = true;
 
 private:
-  char _bearerToken[200];
+  String _bearerToken;
   const char *_refreshToken;
   const char *_clientId;
   const char *_clientSecret;

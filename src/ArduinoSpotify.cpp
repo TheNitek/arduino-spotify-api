@@ -22,8 +22,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 ArduinoSpotify::ArduinoSpotify(WiFiClient &client, char *bearerToken)
 {
-    this->_client = &client;
-    sprintf(this->_bearerToken, "Bearer %s", bearerToken);
+    _client = &client;
+    _bearerToken = String("Bearer ") + bearerToken;
     _http = new HTTPClient();
     _http->setTimeout(SPOTIFY_TIMEOUT);
     _http->setConnectTimeout(SPOTIFY_TIMEOUT);
@@ -31,10 +31,10 @@ ArduinoSpotify::ArduinoSpotify(WiFiClient &client, char *bearerToken)
 
 ArduinoSpotify::ArduinoSpotify(WiFiClient &client, const char *clientId, const char *clientSecret, const char *refreshToken)
 {
-    this->_client = &client;
-    this->_clientId = clientId;
-    this->_clientSecret = clientSecret;
-    this->_refreshToken = refreshToken;
+    _client = &client;
+    _clientId = clientId;
+    _clientSecret = clientSecret;
+    _refreshToken = refreshToken;
     _http = new HTTPClient();
     _http->setTimeout(SPOTIFY_TIMEOUT);
     _http->setConnectTimeout(SPOTIFY_TIMEOUT);
@@ -131,7 +131,7 @@ bool ArduinoSpotify::refreshAccessToken()
         DeserializationError error = deserializeJson(doc, _http->getStream());
         if (!error)
         {
-            sprintf(this->_bearerToken, "Bearer %s", doc["access_token"].as<char *>());
+            _bearerToken = String("Bearer ") + doc["access_token"].as<String>();
             int tokenTtl = doc["expires_in"];             // Usually 3600 (1 hour)
             _tokenTimeToLiveMs = (tokenTtl * 1000) - 2000; // The 2000 is just to force the token expiry to check if its very close
             _timeTokenRefreshed = now;
@@ -140,7 +140,10 @@ bool ArduinoSpotify::refreshAccessToken()
     }
     else
     {
-        parseError();
+        if(statusCode > 0)
+        {
+            parseError();
+        }
     }
 
     stopClient();
@@ -162,7 +165,6 @@ bool ArduinoSpotify::checkAndRefreshAccessToken()
 
 const char *ArduinoSpotify::requestAccessTokens(const char *code, const char *redirectUrl)
 {
-
     char body[1000];
     sprintf(body, requestAccessTokensBody, code, redirectUrl, _clientId, _clientSecret);
 
@@ -184,7 +186,7 @@ const char *ArduinoSpotify::requestAccessTokens(const char *code, const char *re
         DeserializationError error = deserializeJson(doc, _http->getStream());
         if (!error)
         {
-            sprintf(this->_bearerToken, "Bearer %s", doc["access_token"].as<char *>());
+            this->_bearerToken = String("Bearer ") + doc["access_token"].as<String>();
             _refreshToken = doc["refresh_token"].as<char *>();
             int tokenTtl = doc["expires_in"];             // Usually 3600 (1 hour)
             _tokenTimeToLiveMs = (tokenTtl * 1000) - 2000; // The 2000 is just to force the token expiry to check if its very close
@@ -193,7 +195,10 @@ const char *ArduinoSpotify::requestAccessTokens(const char *code, const char *re
     }
     else
     {
-        parseError();
+        if(statusCode > 0)
+        {
+            parseError();
+        }
     }
 
     stopClient();
@@ -206,7 +211,7 @@ bool ArduinoSpotify::play(const char *deviceId)
     return playerControl(command, deviceId);
 }
 
-bool ArduinoSpotify::playAdvanced(char *body, const char *deviceId)
+bool ArduinoSpotify::playAdvanced(const char *body, const char *deviceId)
 {
     char command[100] = SPOTIFY_PLAY_ENDPOINT;
     return playerControl(command, deviceId, body);
@@ -292,7 +297,7 @@ bool ArduinoSpotify::playerControl(char *command, const char *deviceId, const ch
         checkAndRefreshAccessToken();
     }
 
-    int statusCode = makePutRequest(command, _bearerToken, body);
+    int statusCode = makePutRequest(command, _bearerToken.c_str(), body);
 
     stopClient();
 
@@ -318,7 +323,7 @@ bool ArduinoSpotify::playerNavigate(char *command, const char *deviceId)
     {
         checkAndRefreshAccessToken();
     }
-    int statusCode = makePostRequest(command, _bearerToken);
+    int statusCode = makePostRequest(command, _bearerToken.c_str());
 
     stopClient();
     //Will return 204 if all went well.
@@ -357,7 +362,7 @@ bool ArduinoSpotify::seek(int position, const char *deviceId)
     {
         checkAndRefreshAccessToken();
     }
-    int statusCode = makePutRequest(command, _bearerToken);
+    int statusCode = makePutRequest(command, _bearerToken.c_str());
     stopClient();
     //Will return 204 if all went well.
     return statusCode == 204;
@@ -374,7 +379,7 @@ uint8_t ArduinoSpotify::getDevices(SpotifyDevice resultDevices[], uint8_t maxDev
         checkAndRefreshAccessToken();
     }
 
-    int statusCode = makeGetRequest(SPOTIFY_DEVICES_ENDPOINT, _bearerToken);
+    int statusCode = makeGetRequest(SPOTIFY_DEVICES_ENDPOINT, _bearerToken.c_str());
 
     uint8_t results = 0;
 
@@ -402,12 +407,12 @@ uint8_t ArduinoSpotify::getDevices(SpotifyDevice resultDevices[], uint8_t maxDev
 
             for(uint8_t i = 0; i < results; i++)
             {
-                strncpy(resultDevices[i].id, devices[i]["id"].as<char *>(), 40);
+                resultDevices[i].id = devices[i]["id"].as<String>();
                 resultDevices[i].isActive = devices[i]["is_active"].as<bool>();
                 resultDevices[i].isPrivateSession = devices[i]["is_private_session"].as<bool>();
                 resultDevices[i].isRestricted = devices[i]["is_restricted"].as<bool>();
-                strncpy(resultDevices[i].name, devices[i]["name"].as<char *>(), 40);
-                strncpy(resultDevices[i].type, devices[i]["type"].as<char *>(), 40);
+                resultDevices[i].name = devices[i]["name"].as<String>();
+                resultDevices[i].type = devices[i]["type"].as<String>();
                 resultDevices[i].volumePrecent = devices[i]["volume_percent"].as<uint8_t>();
             }
         }
@@ -438,7 +443,7 @@ bool ArduinoSpotify::transferPlayback(const char *deviceId, bool play)
     sprintf(body, "{\"device_ids\":[\"%s\"],\"play\":\"%s\"}", deviceId, (play?"true":"false"));
     Serial.println(body);
 
-    int statusCode = makePutRequest(SPOTIFY_TRANSFER_ENDPOINT, _bearerToken, body);
+    int statusCode = makePutRequest(SPOTIFY_TRANSFER_ENDPOINT, _bearerToken.c_str(), body);
     stopClient();
     //Will return 204 if all went well.
     return statusCode == 204;
@@ -462,7 +467,7 @@ CurrentlyPlaying ArduinoSpotify::getCurrentlyPlaying(const char *market)
         checkAndRefreshAccessToken();
     }
 
-    int statusCode = makeGetRequest(command, _bearerToken);
+    int statusCode = makeGetRequest(command, _bearerToken.c_str());
 
     CurrentlyPlaying currentlyPlaying;
     // This flag will get cleared if all goes well
@@ -477,14 +482,16 @@ CurrentlyPlaying ArduinoSpotify::getCurrentlyPlaying(const char *market)
         DeserializationError error = deserializeJson(doc, _http->getStream());
         if (!error)
         {
+            currentlyPlaying.contextUri = doc["context"]["uri"].as<String>();
+
             JsonObject item = doc["item"];
             JsonObject firstArtist = item["album"]["artists"][0];
 
-            strncpy(currentlyPlaying.firstArtistName, firstArtist["name"].as<char *>(), 50);
-            strncpy(currentlyPlaying.firstArtistUri, firstArtist["uri"].as<char *>(), 60);
+            currentlyPlaying.firstArtistName = firstArtist["name"].as<String>();
+            currentlyPlaying.firstArtistUri = firstArtist["uri"].as<String>();
 
-            strncpy(currentlyPlaying.albumName, item["album"]["name"].as<char *>(), 50);
-            strncpy(currentlyPlaying.albumUri, item["album"]["uri"].as<char *>(), 60);
+            currentlyPlaying.albumName = item["album"]["name"].as<String>();
+            currentlyPlaying.albumUri = item["album"]["uri"].as<String>();
 
             JsonArray images = item["album"]["images"];
 
@@ -506,11 +513,11 @@ CurrentlyPlaying ArduinoSpotify::getCurrentlyPlaying(const char *market)
                 int adjustedIndex = startingIndex + i;
                 currentlyPlaying.albumImages[i].height = images[adjustedIndex]["height"].as<int>();
                 currentlyPlaying.albumImages[i].width = images[adjustedIndex]["width"].as<int>();
-                strncpy(currentlyPlaying.albumImages[i].url, images[adjustedIndex]["url"].as<char *>(), 100);
+                currentlyPlaying.albumImages[i].url = images[adjustedIndex]["url"].as<String>();
             }
 
-            strncpy(currentlyPlaying.trackName, item["name"].as<char *>(), 50);
-            strncpy(currentlyPlaying.trackUri, item["uri"].as<char *>(), 60);
+            currentlyPlaying.trackName = item["name"].as<String>();
+            currentlyPlaying.trackUri = item["uri"].as<String>();
 
             currentlyPlaying.isPlaying = doc["is_playing"].as<bool>();
 
@@ -553,7 +560,7 @@ PlayerDetails ArduinoSpotify::getPlayerDetails(const char *market)
         checkAndRefreshAccessToken();
     }
 
-    int statusCode = makeGetRequest(command, _bearerToken);
+    int statusCode = makeGetRequest(command, _bearerToken.c_str());
 
     if (statusCode == 200)
     {
@@ -566,9 +573,9 @@ PlayerDetails ArduinoSpotify::getPlayerDetails(const char *market)
         {
             JsonObject device = doc["device"];
             
-            strncpy(playerDetails.device.id, device["id"].as<char *>(), 40);
-            strncpy(playerDetails.device.name, device["name"].as<char *>(), 40);
-            strncpy(playerDetails.device.type, device["type"].as<char *>(), 40);
+            playerDetails.device.id = device["id"].as<String>();
+            playerDetails.device.name = device["name"].as<String>();
+            playerDetails.device.type = device["type"].as<String>();
             playerDetails.device.isActive = device["is_active"].as<bool>();
             playerDetails.device.isPrivateSession = device["is_private_session"].as<bool>();
             playerDetails.device.isRestricted = device["is_restricted"].as<bool>();
