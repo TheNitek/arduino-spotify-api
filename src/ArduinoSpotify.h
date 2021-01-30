@@ -30,10 +30,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <Client.h>
+#include <WiFiClient.h>
+#if defined(ESP32)
+#include <HTTPClient.h>
+#elif defined(ESP8266)
+#include <ESP8266HTTPClient.h>
+#endif
 
 #define SPOTIFY_HOST "api.spotify.com"
 #define SPOTIFY_ACCOUNTS_HOST "accounts.spotify.com"
+#define SPOTIFY_PORT 443
 // Fingerprint correct as of July 23rd, 2020
 #define SPOTIFY_FINGERPRINT "B9 79 6B CE FD 61 21 97 A7 02 90 EE DA CD F0 A0 44 13 0E EB"
 #define SPOTIFY_TIMEOUT 2000
@@ -116,8 +122,8 @@ struct CurrentlyPlaying
 class ArduinoSpotify
 {
 public:
-  ArduinoSpotify(Client &client, char *bearerToken);
-  ArduinoSpotify(Client &client, const char *clientId, const char *clientSecret, const char *refreshToken = "");
+  ArduinoSpotify(WiFiClient &client, char *bearerToken);
+  ArduinoSpotify(WiFiClient &client, const char *clientId, const char *clientSecret, const char *refreshToken = "");
 
   // Auth Methods
   void setRefreshToken(const char *refreshToken);
@@ -151,26 +157,23 @@ public:
   // Image methods
   bool getImage(char *imageUrl, Stream *file);
 
-  int portNumber = 443;
   int tagArraySize = 10;
   int deviceBufferSize = 10000;
   int currentlyPlayingBufferSize = 10000;
   int playerDetailsBufferSize = 10000;
   bool autoTokenRefresh = true;
-  Client *client;
 
 private:
   char _bearerToken[200];
   const char *_refreshToken;
   const char *_clientId;
   const char *_clientSecret;
-  unsigned int timeTokenRefreshed;
-  unsigned int tokenTimeToLiveMs;
+  unsigned int _timeTokenRefreshed;
+  unsigned int _tokenTimeToLiveMs;
+  WiFiClient *_client;
+  HTTPClient *_http;
   // Should not be needed, but might be use to save some RAM between requests
   void stopClient();
-  int getContentLength();
-  int getHttpStatusCode();
-  void skipHeaders(bool tossUnexpectedForJSON = true);
   void parseError();
   const char *requestAccessTokensBody =
       R"(grant_type=authorization_code&code=%s&redirect_uri=%s&client_id=%s&client_secret=%s)";
