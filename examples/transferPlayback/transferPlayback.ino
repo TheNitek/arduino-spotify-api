@@ -113,7 +113,7 @@ void setup() {
 
     for(uint8_t i = 0; i < numDevices; i++) {
         Serial.printf("Going to start of track on device %s (%d, %d, %d)\n", devices[i].name, devices[i].isActive, devices[i].isPrivateSession, devices[i].isRestricted);
-        if(spotify.transferPlayback(devices[i].id, true)){
+        if(spotify.transferPlayback(devices[i].id.c_str(), true)){
             Serial.println("done!");
         }
         delay(5000);

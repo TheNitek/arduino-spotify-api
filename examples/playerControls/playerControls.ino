@@ -161,17 +161,17 @@ void setup() {
 
     delay(3000);
     Serial.print("Setting repeat mode to 'track'...");
-    if(spotify.setRepeatMode(repeat_track)){
+    if(spotify.setRepeatMode(REPEAT_TRACK)){
         Serial.println("done!");
     }
     delay(3000);
     Serial.print("Setting repeat mode to 'context'...");
-    if(spotify.setRepeatMode(repeat_context)){
+    if(spotify.setRepeatMode(REPEAT_CONTEXT)){
         Serial.println("done!");
     }
     delay(3000);
     Serial.print("Setting repeat mode to 'off'...");
-    if(spotify.setRepeatMode(repeat_off)){
+    if(spotify.setRepeatMode(REPEAT_OFF)){
         Serial.println("done!");
     }
 

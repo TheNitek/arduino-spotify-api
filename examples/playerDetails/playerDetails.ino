@@ -170,9 +170,9 @@ void printPlayerDetailsToSerial(PlayerDetails playerDetails)
         Serial.print("Repeat State: ");
         switch(playerDetails.repeateState)
         {
-            case repeat_track  : Serial.println("track");   break;
-            case repeat_context: Serial.println("context"); break;
-            case repeat_off : Serial.println("off");  break;
+            case REPEAT_TRACK  : Serial.println("track");   break;
+            case REPEAT_CONTEXT: Serial.println("context"); break;
+            case REPEAT_OFF : Serial.println("off");  break;
         }
 
         Serial.println("------------------------");
