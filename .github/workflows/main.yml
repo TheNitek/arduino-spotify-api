@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        example: [examples/displayAlbumArt/albumArtMatrix.ino, examples/getCurrentlyPlaying/getCurrentlyPlaying.ino, examples/getRefreshToken/getRefreshToken.ino, 
+        example: [examples/albumArtMatrix/albumArtMatrix.ino, examples/getCurrentlyPlaying/getCurrentlyPlaying.ino, examples/getRefreshToken/getRefreshToken.ino, 
           examples/playAdvanced/playAdvanced.ino, examples/playerControls/playerControls.ino, examples/playerDetails/playerDetails.ino, 
           examples/transferPlayback/transferPlayback.ino]
 
