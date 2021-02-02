@@ -252,13 +252,13 @@ bool ArduinoSpotify::setRepeatMode(RepeatOptions repeat, const char *deviceId)
     char repeatState[10];
     switch (repeat)
     {
-    case repeat_track:
+    case REPEAT_TRACK:
         strcpy(repeatState, "track");
         break;
-    case repeat_context:
+    case REPEAT_CONTEXT:
         strcpy(repeatState, "context");
         break;
-    case repeat_off:
+    case REPEAT_OFF:
         strcpy(repeatState, "off");
         break;
     }
@@ -441,7 +441,9 @@ bool ArduinoSpotify::transferPlayback(const char *deviceId, bool play)
 
     char body[100];
     sprintf(body, "{\"device_ids\":[\"%s\"],\"play\":\"%s\"}", deviceId, (play?"true":"false"));
+#ifdef SPOTIFY_DEBUG
     Serial.println(body);
+#endif
 
     int statusCode = makePutRequest(SPOTIFY_TRANSFER_ENDPOINT, _bearerToken.c_str(), body);
     stopClient();
@@ -590,15 +592,15 @@ PlayerDetails ArduinoSpotify::getPlayerDetails(const char *market)
 
             if (strncmp(repeat_state, "track", 5) == 0)
             {
-                playerDetails.repeateState = repeat_track;
+                playerDetails.repeateState = REPEAT_TRACK;
             }
             else if (strncmp(repeat_state, "context", 7) == 0)
             {
-                playerDetails.repeateState = repeat_context;
+                playerDetails.repeateState = REPEAT_CONTEXT;
             }
             else
             {
-                playerDetails.repeateState = repeat_off;
+                playerDetails.repeateState = REPEAT_OFF;
             }
 
             playerDetails.error = false;
