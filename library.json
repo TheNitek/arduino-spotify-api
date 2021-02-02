@@ -1,12 +1,20 @@
 {
   "name":"ArduinoSpotifyAPI",
-  "description":"A library to wrap the Spotify API (supports ESP8266/ESP32 & others)",
+  "description":"A library to wrap the Spotify API (supports ESP8266/ESP32)",
   "keywords":"Spotify,Music,Arduino",
   "authors":
-  {
-    "name": "Brian Lough <brian.d.lough@gmail.com>",
-    "maintainer": true
-  },
+  [
+    {
+      "name": "Brian Lough",
+      "email": "brian.d.lough@gmail.com"
+    },
+    {
+      "name": "Claus Näveke",
+      "email": "github@naeveke.de",
+      "url": "https://github.com/TheNitek",
+      "maintainer": true
+    }
+  ],
   "repository":
   {
     "type": "git",
@@ -14,13 +22,11 @@
   },
   "version": "0.1.0",
   "license": "lgpl-2.1",
-  "frameworks": "arduino",
-  "platforms": "*",
+  "frameworks": ["Arduino"],
+  "platforms": ["espressif8266", "espressif32"],
   "dependencies": [
     {
       "name": "ArduinoJson"
     }
-  ],
-  "build": {
-  }
+  ]
 }

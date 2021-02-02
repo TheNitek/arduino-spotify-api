@@ -34,8 +34,13 @@
 // Standard Libraries
 // ----------------------------
 
+#if defined(ESP32)
 #include <WiFi.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#endif
 #include <WiFiClientSecure.h>
+
 
 #define FS_NO_GLOBALS
 #include <FS.h>

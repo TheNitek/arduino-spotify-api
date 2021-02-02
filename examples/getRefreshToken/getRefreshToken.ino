@@ -1,25 +1,24 @@
 /*******************************************************************
     Get Refresh Token from spotify, this is needed for the other
-    examples. 
+    examples.
 
-    If you are on windows you will need to install Bonjour for MDNS ("arduino.local")
-    to work: https://support.apple.com/kb/dl999?locale=en_IE
-
+    Note: MDNS does not seem to work well on the ESP32 so we will have to use
+    the IP address for the redirect URL
 
     Instrucitons:
 
-
-    - Add the following to Redirect URI on your Spotify app "http://arduino.local/callback/" 
-    (don't forget the last "/")
-    - Put in your Wifi details, Client ID and Client Secret and flash to the board
-    - Open browser to esp: "esp8266.local"
+    - Put in your Wifi details, Client ID, Client secret and flash to the board
+    - Get the Ip Address from the serial monitor
+    - Add the following to Redirect URI on your Spotify app "http://[ESP_IP]/callback/"
+    e.g. "http://192.168.1.20/callback/" (don't forget the last "/")
+    - Open browser to esp using the IP address
     - Click the link
-    - Authorization Code will be printed to screen, use this
+    - The Refresh Token will be printed to screen, use this
       for SPOTIFY_REFRESH_TOKEN in other examples.
 
 
     Parts:
-    D1 Mini ESP8266 * - http://s.click.aliexpress.com/e/uzFUnIe
+    ESP32 D1 Mini stlye Dev board* - http://s.click.aliexpress.com/e/C6ds4my
 
  *  * = Affilate
 
@@ -38,12 +37,14 @@
 // Standard Libraries
 // ----------------------------
 
+#if defined(ESP32)
+#include <WiFi.h>
+#elif defined(ESP8266)
 #include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
-
+#endif
 #include <WiFiClientSecure.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
 
 // ----------------------------
 // Additional Libraries - each one of these will need to be installed.
@@ -69,11 +70,18 @@ char clientId[] = "56t4373258u3405u43u543";     // Your client ID of your spotif
 char clientSecret[] = "56t4373258u3405u43u543"; // Your client Secret of your spotify APP (Do Not share this!)
 
 char scope[] = "user-read-playback-state%20user-modify-playback-state";
-char callbackURI[] = "http%3A%2F%2Farduino.local%2Fcallback%2F";
+char callbackURItemplate[] = "%s%s%s";
+char callbackURIProtocol[] = "http%3A%2F%2F"; // "http://"
+char callbackURIAddress[] = "%2Fcallback%2F"; // "/callback/"
+char callbackURI[100];
 
 //------- ---------------------- ------
 
-ESP8266WebServer server(80);
+// including a "spotify_server_cert" variable
+// header is included as part of the ArduinoSpotify libary
+#include <ArduinoSpotifyCert.h>
+
+WebServer server(80);
 
 WiFiClientSecure client;
 ArduinoSpotify spotify(client, clientId, clientSecret);
@@ -150,26 +158,22 @@ void setup()
 
   Serial.begin(115200);
 
-  // Set WiFi to station mode and disconnect from an AP if it was Previously
-  // connected
   WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
-  delay(100);
-
-  // Attempt to connect to Wifi network:
-  Serial.print("Connecting Wifi: ");
-  Serial.println(ssid);
   WiFi.begin(ssid, password);
+  Serial.println("");
+
+  // Wait for connection
   while (WiFi.status() != WL_CONNECTED)
   {
-    Serial.print(".");
     delay(500);
+    Serial.print(".");
   }
   Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  IPAddress ip = WiFi.localIP();
-  Serial.println(ip);
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+  Serial.print("IP address: ");
+  IPAddress ipAddress = WiFi.localIP();
+  Serial.println(ipAddress);
 
   if (MDNS.begin("arduino"))
   {
@@ -178,7 +182,10 @@ void setup()
 
   // If you want to enable some extra debugging
   // uncomment the "#define SPOTIFY_DEBUG" in ArduinoSpotify.h
-  client.setFingerprint(SPOTIFY_FINGERPRINT);
+  client.setCACert(spotify_server_cert);
+
+  // Building up callback URL using IP address.
+  sprintf(callbackURI, callbackURItemplate, callbackURIProtocol, ipAddress.toString().c_str(), callbackURIAddress);
 
   server.on("/", handleRoot);
   server.on("/callback/", handleCallback);
@@ -190,5 +197,4 @@ void setup()
 void loop()
 {
   server.handleClient();
-  MDNS.update();
 }

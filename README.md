@@ -1,14 +1,13 @@
 # arduino-spotify-api
-![Travis CI status](https://api.travis-ci.org/witnessmenow/arduino-spotify-api.svg?branch=master)
-![License](https://img.shields.io/github/license/witnessmenow/arduino-spotify-api)
-![Release stable](https://badgen.net/github/release/witnessmenow/arduino-spotify-api/stable)  
 Arduino library for integrating with a subset of the [Spotify Web-API](https://developer.spotify.com/documentation/web-api/reference/) (Does not play music)
+
+This fork only runs on ESP32 and probably ESP8266. Instead of implementing the HTTP protocoll again, it uses the provided HTTPClients. It also fixed the memory handling and adds improved support for multiple playback devices.
 
 **Work in progress library - expect changes!**
 
 ## Help support what I do!
 
-I have created a lot of different Arduino libraries that I hope people can make use of. [If you enjoy my work, please consider becoming a Github sponsor!](https://github.com/sponsors/witnessmenow/)
+Brian has created a lot of different Arduino libraries. [If you enjoy his work, please consider becoming a Github sponsor!](https://github.com/sponsors/witnessmenow/)
 
 ## Library Features:
 
@@ -26,6 +25,7 @@ The Library supports the following features:
     - Set Volume (doesn't seem to work on my phone, works on desktop though)
     - Set Repeat Modes
     - Toggle Shuffle
+    - Transfer Playback to other device
 
 ### What needs to be added:
 
@@ -47,11 +47,9 @@ Spotify's Authentication flow requires a webserver to complete, but it's only ne
 
 Because the webserver is only needed once, I decided to seperate the logic for getting the Refresh token to it's own examples.
 
-Follow the instructions in one of the following examples to get your token.
+Follow the instructions in one of the following example to get your token.
 
-- [ESP8266](examples/esp8266/getRefreshToken/getRefreshToken.ino)
-- [ESP32](examples/esp32/getRefreshToken/getRefreshToken.ino)
-- WiFiNINA (Nano 33 IOT) - [Help needed to create an example](https://github.com/witnessmenow/arduino-spotify-api/issues/2)
+- [getRefreshToken](examples/getRefreshToken/getRefreshToken.ino)
 
 Note: Once you have a refresh token, you can use it on either platform in your sketches, it is not tied to any particular device.
 
